@@ -1,225 +1,146 @@
-import java.io.*;
-import java.util.*;
-import java.util.stream.*;
-import static java.util.stream.Collectors.toList;
+import java.util.Scanner;
+import java.util.HashMap;
+import java.util.Map;
 
-class Account {
-    public long accountNumber;
-    public String holderName;
-    public double balance;
+class BankAccount {
+    private String accountNumber;
+    private String accountHolderName;
+    private double balance;
 
-    // Create constructor to initialize the class with the 3 params above
-    public Account(long accountNumber, String holderName, double balance) {
+    public BankAccount(String accountNumber, String accountHolderName) {
         this.accountNumber = accountNumber;
-        this.holderName = holderName;
-        this.balance = balance;
-    }
-}
-
-interface IBankingSystem {
-    void createAccount(Account account);
-
-    void updateAccountName(long accountNumber, String newHolderName);
-
-    void deleteAccount(long accountNumber);
-
-    void deposit(long accountNumber, double amount);
-
-    void withdraw(long accountNumber, double amount);
-
-    void printAllAccountSummariesByHolderName(String holderName);
-}
-
-class BankingSystem implements IBankingSystem {
-    private List<Account> accountList = new ArrayList<Account>();
-
-    public void printAllAccountsSummary() {
-        for (Account account : accountList) {
-            printAccountSummary(account);
-        }
+        this.accountHolderName = accountHolderName;
+        this.balance = 0.0;
     }
 
-    private void printAccountSummary(Account account) {
-        String summary = String.format("{accountNumber: %d, holderName: %s, balance: %.2f}", account.accountNumber,account.holderName, account.balance);
-        printMessage(summary);
+    public String getAccountNumber() {
+        return accountNumber;
     }
 
-    public void printAccountSummary(long accountNumber) {
-        Account account = findAccount(accountNumber);
-        if (account != null) {
-        printAccountSummary(account);
-    } else {
-            printMessage("ACCOUNT NOT FOUND");
-        }
+    public String getAccountHolderName() {
+        return accountHolderName;
     }
 
-    // Use this method as a utility to locate the requested account.
-    // For example, you can use this when updating an account.
-    public Account findAccount(long accountNumber) {
-        for (Account account : accountList) {
-            if (account.accountNumber == accountNumber) {
-                return account;
-            }
-        }
-        return null; //Account not found
+    public double getBalance() {
+        return balance;
     }
 
-    // IBankingSystem implementations
-    public void createAccount(Account account) {
-        accountList.add(account); //Adds the account to the list
-    }
-
-    @Override
-    public void updateAccountName(long accountNumber, String newHolderName) {
-        Account account = findAccount(accountNumber);
-        if (account != null) {
-            account.holderName = newHolderName;
+    public void deposit(double amount) {
+        if (amount > 0) {
+            balance += amount;
+            System.out.println("Deposit successful! Current balance: $" + balance);
         } else {
-            printMessage("ACCOUNT NOT FOUND");
+            System.out.println("Invalid deposit amount.");
         }
     }
-    
-    @Override
-    public void deleteAccount(long accountNumber) {
-        Account account = findAccount(accountNumber);
-        if (account != null) {
-            accountList.remove(account); //Removing account
-            printMessage("ACCOUNT DELETED");
-        } else { 
-           printMessage("ACCOUNT NOT FOUND");
-        }
-    }
-    
-    @Override
-    public void deposit(long accountNumber, double amount) {
-        Account account = findAccount(accountNumber);
-        if (account != null) {
-            account.balance += amount;
+
+    public void withdraw(double amount) {
+        if (amount > 0 && amount <= balance) {
+            balance -= amount;
+            System.out.println("Withdrawal successful! Current balance: $" + balance);
         } else {
-            printMessage("ACCOUNT NOT FOUND");
+            System.out.println("Invalid withdrawal amount or insufficient balance.");
         }
-    }
-    
-    @Override
-    public void withdraw(long accountNumber, double amount) {
-        Account account = findAccount(accountNumber);
-        if (account != null) {
-            if (account.balance >= amount) {
-            account.balance -= amount; //Perform withdrawal
-        } else {
-            printMessage("INSUFFICIENT FUNDS"); 
-        }
-    } else {
-        printMessage("ACCOUNT NOT FOUND");
     }
 }
 
-    @Override
-    public void printAllAccountSummariesByHolderName(String holderName) {
-        for (Account account : accountList) {
-            if (account.holderName.equals(holderName)) {
-                printAccountSummary(account);
+public class Main {
+    private static Map<String, BankAccount> accounts = new HashMap<>();
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        String option;
+
+        do {
+            System.out.println("\nWelcome to Simple Bank!");
+            System.out.println("1. Create an account");
+            System.out.println("2. Deposit money");
+            System.out.println("3. Withdraw money");
+            System.out.println("4. Check balance");
+            System.out.println("5. Exit");
+            System.out.print("Choose an option: ");
+            option = scanner.nextLine();
+
+            switch (option) {
+                case "1":
+                    createAccount(scanner);
+                    break;
+                case "2":
+                    depositMoney(scanner);
+                    break;
+                case "3":
+                    withdrawMoney(scanner);
+                    break;
+                case "4":
+                    checkBalance(scanner);
+                    break;
+                case "5":
+                    System.out.println("Thank you for using Simple Bank. Goodbye!");
+                    break;
+                default:
+                    System.out.println("Invalid option. Please try again.");
+                    break;
             }
+        } while (!option.equals("5"));
+
+        scanner.close();
+    }
+
+    private static void createAccount(Scanner scanner) {
+        System.out.print("Enter account number: ");
+        String accountNumber = scanner.nextLine();
+        System.out.print("Enter account holder name: ");
+        String accountHolderName = scanner.nextLine();
+
+        if (accounts.containsKey(accountNumber)) {
+            System.out.println("Account already exists with this account number.");
+        } else {
+            BankAccount newAccount = new BankAccount(accountNumber, accountHolderName);
+            accounts.put(accountNumber, newAccount);
+            System.out.println("Account created successfully!");
         }
     }
-    
-    
-    public void printMessage(String message) {
-        System.out.println(message);
-    }
-}
 
-public class Solution {
-    public static void main(String[] args) throws IOException {
-        BankingSystem bank = new BankingSystem();
+    private static void depositMoney(Scanner scanner) {
+        System.out.print("Enter account number: ");
+        String accountNumber = scanner.nextLine();
 
-        // input handling
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
-        int operationCount = Integer.parseInt(bufferedReader.readLine().replaceAll("\\s+$", "").split("=")[1].trim());
-        bufferedReader.readLine();
-        IntStream.range(0, operationCount).forEach(opCountItr -> {
-            try {
-                List<String> theInput = Stream.of(bufferedReader.readLine().replaceAll("\\s+$", "").split(","))
-                        .collect(toList());
-                String action = theInput.get(0);
-                String arg1 = theInput.size() > 1 ? theInput.get(1).trim() : null;
-                String arg2 = theInput.size() > 2 ? theInput.get(2).trim() : null;
-                String arg3 = theInput.size() > 3 ? theInput.get(3).trim() : null;
-                ProcessInputs(bank, action, arg1, arg2, arg3);
-            } catch (IOException exception) {
-                throw new RuntimeException(exception);
-            }
-    });
-        bufferedReader.close();
+        if (accounts.containsKey(accountNumber)) {
+            BankAccount account = accounts.get(accountNumber);
+            System.out.print("Enter amount to deposit: ");
+            double amount = scanner.nextDouble();
+            scanner.nextLine();  // consume newline
+            account.deposit(amount);
+        } else {
+            System.out.println("Account not found.");
+        }
     }
 
-/**
- * @param bank
- * @param action
- * @param arg1
- * @param arg2
- * @param arg3
- */
-private static void ProcessInputs(BankingSystem bank, String action, String arg1, String arg2, String arg3) {
-        long accountNumber;
-        String holderName;
-        double amount;
-    
-        switch (action) {
-            case "createAccount":
-                accountNumber = Long.parseLong(arg1);
-                holderName = arg2;
-                amount = Double.parseDouble(arg3);
-                Account account = new Account(accountNumber, holderName, amount);
-                bank.createAccount(account);
-                break;
+    private static void withdrawMoney(Scanner scanner) {
+        System.out.print("Enter account number: ");
+        String accountNumber = scanner.nextLine();
 
-            case "deleteAccount":
-                accountNumber = Long.parseLong(arg1);
-                bank.deleteAccount(accountNumber);
-                break;
+        if (accounts.containsKey(accountNumber)) {
+            BankAccount account = accounts.get(accountNumber);
+            System.out.print("Enter amount to withdraw: ");
+            double amount = scanner.nextDouble();
+            scanner.nextLine();  // consume newline
+            account.withdraw(amount);
+        } else {
+            System.out.println("Account not found.");
+        }
+    }
 
-            case "deposit": {
-                accountNumber = Long.parseLong(arg1);
-                amount = Double.parseDouble(arg2);
-                bank.deposit(accountNumber, amount);
-                break;
-            }
+    private static void checkBalance(Scanner scanner) {
+        System.out.print("Enter account number: ");
+        String accountNumber = scanner.nextLine();
 
-            case "printAllAccountsSummary":
-                bank.printAllAccountsSummary();
-                break;
-
-            case "printAllAccountSummariesByHolderName":
-                holderName = arg1;
-                bank.printAllAccountSummariesByHolderName(holderName);
-                break;
-
-            case "printAccountSummary":
-                accountNumber = Long.parseLong(arg1);
-                bank.printAccountSummary(accountNumber);
-                break;
-
-            case "updateAccountName":
-                accountNumber = Long.parseLong(arg1);
-                holderName = arg2;
-                bank.updateAccountName(accountNumber, holderName);
-                break;
-
-            case "withdraw":
-                accountNumber = Long.parseLong(arg1);
-                amount = Double.parseDouble(arg2);
-                bank.withdraw(accountNumber, amount);
-                break;
-
-            default: 
-            if (action.equals("withdraw") || action.equals("deposit") || action.equals("printAccountSummary")) {
-                Account account = bank.findAccount(accountNumber);
-                if (account == null) {
-                    bank.printMessage("ACCOUNT NOT FOUND");
-                    break; //Exit switch statement
-                }
-            }
-                throw new IllegalArgumentException("No know action name was provided.");
+        if (accounts.containsKey(accountNumber)) {
+            BankAccount account = accounts.get(accountNumber);
+            System.out.println("Account holder: " + account.getAccountHolderName());
+            System.out.println("Current balance: $" + account.getBalance());
+        } else {
+            System.out.println("Account not found.");
+        }
     }
 }
